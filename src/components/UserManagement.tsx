@@ -8,8 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
-import { UserPlus, Mail, UserCheck, AlertCircle } from 'lucide-react';
+import { UserPlus, Mail, UserCheck, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 interface UserProfile {
   id: string;
@@ -25,19 +26,24 @@ interface UserProfile {
 export const UserManagement = () => {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
+  const { isAdmin } = useAuth();
 
-  const [inviteData, setInviteData] = useState({
+  const [createData, setCreateData] = useState({
     email: '',
+    password: '',
     full_name: '',
     role: '',
     department: '',
   });
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    if (isAdmin()) {
+      fetchUsers();
+    }
+  }, [isAdmin]);
 
   const fetchUsers = async () => {
     setIsLoading(true);
@@ -65,10 +71,10 @@ export const UserManagement = () => {
     }
   };
 
-  const handleInviteUser = async (e: React.FormEvent) => {
+  const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!inviteData.email || !inviteData.full_name || !inviteData.role || !inviteData.department) {
+    if (!createData.email || !createData.password || !createData.full_name || !createData.role || !createData.department) {
       toast({
         title: "Error",
         description: "Please fill in all required fields.",
@@ -77,50 +83,64 @@ export const UserManagement = () => {
       return;
     }
 
+    if (createData.password.length < 6) {
+      toast({
+        title: "Error",
+        description: "Password must be at least 6 characters long.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
-      // For now, we'll create a dummy password since the user will need to set their own
-      const tempPassword = 'TempPassword123!';
-      
-      const { data, error } = await supabase.auth.admin.createUser({
-        email: inviteData.email,
-        password: tempPassword,
+      // Create user in auth.users
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email: createData.email,
+        password: createData.password,
         email_confirm: true,
         user_metadata: {
-          full_name: inviteData.full_name,
-          role: inviteData.role,
-          department: inviteData.department
+          full_name: createData.full_name,
+          role: createData.role,
+          department: createData.department
         }
       });
 
-      if (error) {
-        console.error('Error creating user:', error);
+      if (authError) {
+        console.error('Error creating user:', authError);
         toast({
           title: "Error",
-          description: error.message,
+          description: authError.message,
           variant: "destructive",
         });
         return;
       }
 
+      // The profile will be created automatically by the trigger
       toast({
-        title: "User Invited",
-        description: `${inviteData.full_name} has been invited successfully.`,
+        title: "User Created",
+        description: `${createData.full_name} has been created successfully.`,
       });
 
-      setInviteData({
+      setCreateData({
         email: '',
+        password: '',
         full_name: '',
         role: '',
         department: '',
       });
-      setIsInviteOpen(false);
-      fetchUsers();
+      setIsCreateOpen(false);
+      
+      // Refresh users list
+      setTimeout(() => {
+        fetchUsers();
+      }, 1000);
+      
     } catch (error) {
-      console.error('Error inviting user:', error);
+      console.error('Error creating user:', error);
       toast({
         title: "Error",
-        description: "Failed to invite user.",
+        description: "Failed to create user.",
         variant: "destructive",
       });
     } finally {
@@ -158,6 +178,34 @@ export const UserManagement = () => {
     }
   };
 
+  const resetUserPassword = async (userId: string, email: string) => {
+    try {
+      const newPassword = Math.random().toString(36).slice(-8) + 'A1!';
+      
+      const { error } = await supabase.auth.admin.updateUserById(userId, {
+        password: newPassword
+      });
+
+      if (error) {
+        console.error('Error resetting password:', error);
+        toast({
+          title: "Error",
+          description: "Failed to reset password.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "Password Reset",
+        description: `New password for ${email}: ${newPassword}`,
+        duration: 10000,
+      });
+    } catch (error) {
+      console.error('Error resetting password:', error);
+    }
+  };
+
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
       case 'admin': return 'destructive';
@@ -173,40 +221,77 @@ export const UserManagement = () => {
     return new Date(dateString).toLocaleDateString();
   };
 
+  if (!isAdmin()) {
+    return (
+      <div className="text-center py-8">
+        <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+        <p className="text-muted-foreground">You don't have permission to manage users.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">User Management</h2>
-        <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
+        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
             <Button>
               <UserPlus className="h-4 w-4 mr-2" />
-              Invite User
+              Create User
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Invite New User</DialogTitle>
+              <DialogTitle>Create New User</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleInviteUser} className="space-y-4">
+            <form onSubmit={handleCreateUser} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="invite-email">Email *</Label>
+                <Label htmlFor="create-email">Email *</Label>
                 <Input
-                  id="invite-email"
+                  id="create-email"
                   type="email"
-                  value={inviteData.email}
-                  onChange={(e) => setInviteData(prev => ({ ...prev, email: e.target.value }))}
+                  value={createData.email}
+                  onChange={(e) => setCreateData(prev => ({ ...prev, email: e.target.value }))}
                   placeholder="user@company.com"
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="invite-name">Full Name *</Label>
+                <Label htmlFor="create-password">Password *</Label>
+                <div className="relative">
+                  <Input
+                    id="create-password"
+                    type={showPassword ? "text" : "password"}
+                    value={createData.password}
+                    onChange={(e) => setCreateData(prev => ({ ...prev, password: e.target.value }))}
+                    placeholder="Minimum 6 characters"
+                    required
+                    minLength={6}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="create-name">Full Name *</Label>
                 <Input
-                  id="invite-name"
-                  value={inviteData.full_name}
-                  onChange={(e) => setInviteData(prev => ({ ...prev, full_name: e.target.value }))}
+                  id="create-name"
+                  value={createData.full_name}
+                  onChange={(e) => setCreateData(prev => ({ ...prev, full_name: e.target.value }))}
                   placeholder="John Doe"
                   required
                 />
@@ -214,10 +299,10 @@ export const UserManagement = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="invite-role">Role *</Label>
+                  <Label htmlFor="create-role">Role *</Label>
                   <Select 
-                    value={inviteData.role} 
-                    onValueChange={(value) => setInviteData(prev => ({ ...prev, role: value }))}
+                    value={createData.role} 
+                    onValueChange={(value) => setCreateData(prev => ({ ...prev, role: value }))}
                     required
                   >
                     <SelectTrigger>
@@ -234,10 +319,10 @@ export const UserManagement = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="invite-department">Department *</Label>
+                  <Label htmlFor="create-department">Department *</Label>
                   <Select 
-                    value={inviteData.department} 
-                    onValueChange={(value) => setInviteData(prev => ({ ...prev, department: value }))}
+                    value={createData.department} 
+                    onValueChange={(value) => setCreateData(prev => ({ ...prev, department: value }))}
                     required
                   >
                     <SelectTrigger>
@@ -255,12 +340,12 @@ export const UserManagement = () => {
 
               <div className="flex gap-2 pt-4">
                 <Button type="submit" disabled={isLoading} className="flex-1">
-                  {isLoading ? "Inviting..." : "Send Invite"}
+                  {isLoading ? "Creating..." : "Create User"}
                 </Button>
                 <Button 
                   type="button" 
                   variant="outline" 
-                  onClick={() => setIsInviteOpen(false)}
+                  onClick={() => setIsCreateOpen(false)}
                   className="flex-1"
                 >
                   Cancel
@@ -313,12 +398,23 @@ export const UserManagement = () => {
                 </span>
               </div>
 
-              <div className="pt-2 border-t flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Active Status</span>
-                <Switch 
-                  checked={user.is_active}
-                  onCheckedChange={() => toggleUserStatus(user.id, user.is_active)}
-                />
+              <div className="space-y-3 pt-2 border-t">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Active Status</span>
+                  <Switch 
+                    checked={user.is_active}
+                    onCheckedChange={() => toggleUserStatus(user.id, user.is_active)}
+                  />
+                </div>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => resetUserPassword(user.id, user.email)}
+                  className="w-full"
+                >
+                  Reset Password
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -328,7 +424,7 @@ export const UserManagement = () => {
           <div className="col-span-full text-center py-8">
             <UserPlus className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">No users found.</p>
-            <p className="text-sm text-muted-foreground mt-2">Invite your first user to get started.</p>
+            <p className="text-sm text-muted-foreground mt-2">Create your first user to get started.</p>
           </div>
         )}
       </div>

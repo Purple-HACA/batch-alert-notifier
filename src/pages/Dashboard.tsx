@@ -185,12 +185,10 @@ const Dashboard = () => {
               <Bell className="h-4 w-4" />
               Notifications
             </TabsTrigger>
-            {isAdmin() && (
-              <TabsTrigger value="users" className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                Users
-              </TabsTrigger>
-            )}
+            <TabsTrigger value="users" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Users
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="batches">
@@ -226,11 +224,9 @@ const Dashboard = () => {
             </div>
           </TabsContent>
 
-          {isAdmin() && (
-            <TabsContent value="users">
-              <UserManagement />
-            </TabsContent>
-          )}
+          <TabsContent value="users">
+            <UserManagement />
+          </TabsContent>
         </Tabs>
       </div>
     </div>
