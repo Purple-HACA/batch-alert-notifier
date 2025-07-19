@@ -1,37 +1,14 @@
-import { BatchCard } from '@/components/BatchCard';
-import { BatchForm } from '@/components/BatchForm';
-import { WebhookConfig } from '@/components/WebhookConfig';
-import { NotificationHistory } from '@/components/NotificationHistory';
-import { useBatches } from '@/hooks/useBatches';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { BookOpen, Users, AlertTriangle, CheckCircle, RefreshCw } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { BookOpen, Users, Bell, ArrowRight, LogIn } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Index = () => {
-  const {
-    batches,
-    webhookConfig,
-    notificationHistory,
-    isLoading,
-    updateBatch,
-    addBatch,
-    setWebhookConfig,
-    testWebhook,
-  } = useBatches();
-
-  const fullBatches = batches.filter(batch => batch.status === 'Full').length;
-  const availableBatches = batches.filter(batch => batch.status === 'Available').length;
-  const totalSeats = batches.reduce((sum, batch) => sum + batch.totalSeats, 0);
-  const occupiedSeats = batches.reduce((sum, batch) => sum + (batch.totalSeats - batch.seatsRemaining), 0);
-
-  const handleUpdateSeats = (id: string, seatsRemaining: number) => {
-    updateBatch(id, { seatsRemaining });
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/30">
       {/* Header */}
-      <div className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-10">
+      <div className="border-b bg-background/80 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -39,115 +16,75 @@ const Index = () => {
                 <BookOpen className="h-6 w-6 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-foreground">Batch Alert Notifier</h1>
-                <p className="text-sm text-muted-foreground">Academy Batch Management System</p>
+                <h1 className="text-2xl font-bold text-foreground">Batch Alert System</h1>
+                <p className="text-sm text-muted-foreground">Academy Management Platform</p>
               </div>
             </div>
             
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Badge variant={webhookConfig.enabled ? 'success' : 'outline'}>
-                  {webhookConfig.enabled ? (
-                    <>
-                      <CheckCircle className="h-3 w-3 mr-1" />
-                      Notifications On
-                    </>
-                  ) : (
-                    <>
-                      <AlertTriangle className="h-3 w-3 mr-1" />
-                      Notifications Off
-                    </>
-                  )}
-                </Badge>
-              </div>
-            </div>
+            <Link to="/auth">
+              <Button>
+                <LogIn className="h-4 w-4 mr-2" />
+                Sign In
+              </Button>
+            </Link>
           </div>
         </div>
       </div>
 
-      {/* Stats Overview */}
-      <div className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-card rounded-lg p-4 border shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Batches</p>
-                <p className="text-2xl font-bold">{batches.length}</p>
-              </div>
-              <BookOpen className="h-8 w-8 text-primary" />
-            </div>
-          </div>
-          
-          <div className="bg-card rounded-lg p-4 border shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Available Batches</p>
-                <p className="text-2xl font-bold text-success">{availableBatches}</p>
-              </div>
-              <CheckCircle className="h-8 w-8 text-success" />
-            </div>
-          </div>
-          
-          <div className="bg-card rounded-lg p-4 border shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Full Batches</p>
-                <p className="text-2xl font-bold text-destructive">{fullBatches}</p>
-              </div>
-              <AlertTriangle className="h-8 w-8 text-destructive" />
-            </div>
-          </div>
-          
-          <div className="bg-card rounded-lg p-4 border shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Occupancy</p>
-                <p className="text-2xl font-bold">{occupiedSeats}/{totalSeats}</p>
-              </div>
-              <Users className="h-8 w-8 text-primary" />
-            </div>
-          </div>
-        </div>
+      {/* Hero Section */}
+      <div className="container mx-auto px-4 py-16 text-center">
+        <h1 className="text-4xl md:text-6xl font-bold mb-6">
+          Streamline Your <span className="text-primary">Batch Management</span>
+        </h1>
+        <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+          Monitor batch enrollments, receive instant notifications, and manage your academy efficiently with real-time alerts.
+        </p>
+        <Link to="/auth">
+          <Button size="lg" className="text-lg px-8 py-6">
+            Get Started
+            <ArrowRight className="h-5 w-5 ml-2" />
+          </Button>
+        </Link>
+      </div>
 
-        {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Batch Management */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Batch Management</h2>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => window.location.reload()}
-                disabled={isLoading}
-              >
-                <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-                Refresh
-              </Button>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <BatchForm onAddBatch={addBatch} />
-              {batches.map((batch) => (
-                <BatchCard
-                  key={batch.id}
-                  batch={batch}
-                  onUpdateSeats={handleUpdateSeats}
-                />
-              ))}
-            </div>
-          </div>
+      {/* Features */}
+      <div className="container mx-auto px-4 py-16">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <Card>
+            <CardHeader>
+              <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                <BookOpen className="h-6 w-6 text-primary" />
+              </div>
+              <CardTitle>Batch Monitoring</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">Track batch capacity, enrollment status, and manage multiple courses across departments.</p>
+            </CardContent>
+          </Card>
 
-          {/* Configuration Panel */}
-          <div className="space-y-6">
-            <WebhookConfig
-              config={webhookConfig}
-              onConfigChange={setWebhookConfig}
-              onTestWebhook={testWebhook}
-            />
-            
-            <NotificationHistory notifications={notificationHistory} />
-          </div>
+          <Card>
+            <CardHeader>
+              <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                <Bell className="h-6 w-6 text-primary" />
+              </div>
+              <CardTitle>Instant Notifications</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">Get real-time alerts when batches become full via webhook integrations with Zoho Cliq and other platforms.</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                <Users className="h-6 w-6 text-primary" />
+              </div>
+              <CardTitle>Team Management</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">Role-based access control for admins, project leads, and department coordinators.</p>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
