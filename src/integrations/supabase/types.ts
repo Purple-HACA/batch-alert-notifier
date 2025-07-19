@@ -14,16 +14,205 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      batches: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          current_count: number | null
+          department: Database["public"]["Enums"]["department"]
+          description: string | null
+          end_date: string | null
+          id: string
+          max_capacity: number
+          name: string
+          start_date: string | null
+          status: Database["public"]["Enums"]["batch_status"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          current_count?: number | null
+          department: Database["public"]["Enums"]["department"]
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          max_capacity: number
+          name: string
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["batch_status"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          current_count?: number | null
+          department?: Database["public"]["Enums"]["department"]
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          max_capacity?: number
+          name?: string
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["batch_status"] | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "batches_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          batch_id: string | null
+          created_at: string | null
+          error_message: string | null
+          id: string
+          message: string
+          sent_at: string | null
+          status: Database["public"]["Enums"]["notification_status"] | null
+          webhook_config_id: string | null
+        }
+        Insert: {
+          batch_id?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          message: string
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["notification_status"] | null
+          webhook_config_id?: string | null
+        }
+        Update: {
+          batch_id?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          message?: string
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["notification_status"] | null
+          webhook_config_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_webhook_config_id_fkey"
+            columns: ["webhook_config_id"]
+            isOneToOne: false
+            referencedRelation: "webhook_configs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          department: Database["public"]["Enums"]["department"] | null
+          email: string
+          full_name: string
+          id: string
+          is_active: boolean | null
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          department?: Database["public"]["Enums"]["department"] | null
+          email: string
+          full_name: string
+          id: string
+          is_active?: boolean | null
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          department?: Database["public"]["Enums"]["department"] | null
+          email?: string
+          full_name?: string
+          id?: string
+          is_active?: boolean | null
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      webhook_configs: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          department: Database["public"]["Enums"]["department"]
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string | null
+          webhook_url: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          department: Database["public"]["Enums"]["department"]
+          id?: string
+          is_active?: boolean | null
+          name: string
+          updated_at?: string | null
+          webhook_url: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          department?: Database["public"]["Enums"]["department"]
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string | null
+          webhook_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhook_configs_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_department: {
+        Args: { user_id: string }
+        Returns: Database["public"]["Enums"]["department"]
+      }
+      get_user_role: {
+        Args: { user_id: string }
+        Returns: Database["public"]["Enums"]["user_role"]
+      }
     }
     Enums: {
-      [_ in never]: never
+      batch_status: "open" | "full" | "closed" | "cancelled"
+      department: "marketing" | "tech" | "finance" | "design"
+      notification_status: "pending" | "sent" | "failed"
+      user_role:
+        | "admin"
+        | "project_lead"
+        | "tech_lead"
+        | "finance_lead"
+        | "design_lead"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +339,17 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      batch_status: ["open", "full", "closed", "cancelled"],
+      department: ["marketing", "tech", "finance", "design"],
+      notification_status: ["pending", "sent", "failed"],
+      user_role: [
+        "admin",
+        "project_lead",
+        "tech_lead",
+        "finance_lead",
+        "design_lead",
+      ],
+    },
   },
 } as const
