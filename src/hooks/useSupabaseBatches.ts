@@ -134,6 +134,9 @@ export const useSupabaseBatches = () => {
     
     setIsLoading(true);
     try {
+      console.log('Creating batch with data:', batchData);
+      console.log('User profile:', profile);
+      
       const { data, error } = await supabase
         .from('batches')
         .insert([{
@@ -145,9 +148,10 @@ export const useSupabaseBatches = () => {
 
       if (error) {
         console.error('Error creating batch:', error);
+        console.error('Error details:', error.details, error.hint, error.code);
         toast({
           title: "Error",
-          description: "Failed to create batch.",
+          description: `Failed to create batch: ${error.message}`,
           variant: "destructive",
         });
         return false;
@@ -161,6 +165,11 @@ export const useSupabaseBatches = () => {
       return true;
     } catch (error) {
       console.error('Error creating batch:', error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred while creating the batch.",
+        variant: "destructive",
+      });
       return false;
     } finally {
       setIsLoading(false);

@@ -89,7 +89,7 @@ export const useAuth = () => {
 
   const canManageBatches = () => {
     if (!profile) return false;
-    return profile.role === 'admin' || profile.role === 'project_lead';
+    return ['admin', 'project_lead'].includes(profile.role);
   };
 
   const canManageWebhooks = () => {

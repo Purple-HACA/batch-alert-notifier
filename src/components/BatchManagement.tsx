@@ -41,6 +41,15 @@ export const BatchManagement = () => {
       return;
     }
 
+    if (!profile) {
+      toast({
+        title: "Error",
+        description: "User profile not loaded. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const success = await createBatch({
       name: formData.name,
       description: formData.description || undefined,
